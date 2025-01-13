@@ -262,20 +262,21 @@ def create_schedule_section():
     # Load schedule data
     schedule_df = load_data("Schedule")
     
-    # Display existing schedule
-    st.subheader("Existing Schedule")
-    st.dataframe(schedule_df, hide_index=True)
+    # Filter today's schedule
+    today = datetime.now().date()
+    today_schedule = schedule_df[pd.to_datetime(schedule_df['Date']).dt.date == today]
+    
+    # Display today's schedule
+    st.subheader("Today's Schedule")
+    st.dataframe(today_schedule, hide_index=True)
     
     # Add new schedule
     st.subheader("Add New Schedule")
     with st.form("schedule_form"):
         date = st.date_input("Date")
-        time = st.time_input("Time")
         priority = st.selectbox("Priority", ["Career", "Music", "Fitness", "Relationship", "Philosophy", "Finance"])
         planned_activity = st.text_input("Planned Activity")
         planned_duration = st.number_input("Planned Duration (in hours)", min_value=0.0, step=0.25)
-        schedule_type = st.selectbox("Schedule Type", ["Daily", "Weekly", "One-time"])
-        status = st.selectbox("Status", ["Planned", "In Progress", "Completed"])
         
         if st.form_submit_button("Add Schedule"):
             try:
@@ -283,7 +284,7 @@ def create_schedule_section():
                 client = gspread.authorize(creds)
                 sheet = client.open("Priorities_Tracker_Database_Spreadsheet").worksheet("Schedule")
                 
-                new_row = [date.strftime("%Y-%m-%d"), time.strftime("%H:%M:%S"), priority, planned_activity, planned_duration, schedule_type, status]
+                new_row = [date.strftime("%Y-%m-%d"), priority, planned_activity, planned_duration]
                 sheet.append_row(new_row)
                 
                 st.success("Schedule added successfully!")
@@ -298,10 +299,6 @@ def create_plan_vs_actual_analysis():
     # Load data
     schedule_df = load_data("Schedule")
     logged_df = load_data("Sheet1")
-    
-    # Debug: Print column names
-    st.write("Columns in logged_df:", logged_df.columns.tolist())
-    st.write("Columns in schedule_df:", schedule_df.columns.tolist())
     
     # Check if required columns exist
     if 'Duration' not in logged_df.columns:
@@ -325,12 +322,6 @@ def create_plan_vs_actual_analysis():
     # Rename 'Duration' column to 'Duration_actual' in actual_hours
     actual_hours = actual_hours.rename(columns={'Duration': 'Duration_actual'})
     
-    # Debug: Print actual_hours DataFrame
-    st.write("Actual Hours DataFrame:", actual_hours)
-    
-    # Debug: Print planned_hours DataFrame
-    st.write("Planned Hours DataFrame:", planned_hours)
-    
     # Merge planned and actual hours
     comparison_df = pd.merge(
         planned_hours,
@@ -338,9 +329,6 @@ def create_plan_vs_actual_analysis():
         on=['Date', 'Priority'],
         how='left',  # Keep all planned hours even if no actual hours are logged
     )
-    
-    # Debug: Print comparison_df DataFrame
-    st.write("Comparison DataFrame:", comparison_df)
     
     # Fill NaN values in 'Duration_actual' with 0 (for days with no logged activities)
     comparison_df['Duration_actual'] = comparison_df['Duration_actual'].fillna(0)
@@ -354,15 +342,31 @@ def create_plan_vs_actual_analysis():
     
     # Visualize planned vs actual hours
     st.subheader("Planned vs Actual Hours Over Time")
-    fig = px.bar(
+    
+    # Reshape the DataFrame for Plotly
+    melted_df = pd.melt(
         comparison_df,
+        id_vars=['Date', 'Priority'],
+        value_vars=['Planned_Duration', 'Duration_actual'],
+        var_name='Type',
+        value_name='Hours'
+    )
+    
+    # Create a clustered bar chart for each priority
+    fig = px.bar(
+        melted_df,
         x='Date',
-        y=['Planned_Duration', 'Duration_actual'],
+        y='Hours',
+        color='Priority',
+        facet_col='Type',  # Split into separate bars for planned and actual
         barmode='group',
-        labels={'value': 'Hours', 'variable': 'Type'},
-        title="Planned vs Actual Hours by Date"
+        labels={'Hours': 'Hours', 'Type': 'Type'},
+        title="Planned vs Actual Hours by Priority",
+        color_discrete_sequence=px.colors.qualitative.Plotly  # Use 6 distinct colors
     )
     st.plotly_chart(fig)
+
+
 
 # Main app
 def main():
@@ -418,6 +422,7 @@ def main():
     
     with tab4:
         create_plan_vs_actual_analysis()
+
 
 if __name__ == "__main__":
     main()
