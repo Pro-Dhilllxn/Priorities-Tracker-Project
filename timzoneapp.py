@@ -8,8 +8,8 @@ import plotly.graph_objects as go
 import time
 import pytz  # For timezone conversion
 
-# Set the timezone to IST
-IST = pytz.timezone('Asia/Kolkata')
+# Set the timezone to indian_st
+indian_st = pytz.timezone('Asia/Kolkata')
 
 def get_gsheet_credentials():
     """Create credentials object from Streamlit secrets"""
@@ -47,16 +47,16 @@ def load_data(sheet_name):
     if 'Timestamp' in df.columns:
         df['Timestamp'] = pd.to_datetime(df['Timestamp'])
         if df['Timestamp'].dt.tz is None:  # Check if timezone-naive
-            df['Timestamp'] = df['Timestamp'].dt.tz_localize('UTC').dt.tz_convert(IST)
-        else:  # If already timezone-aware, convert to IST
-            df['Timestamp'] = df['Timestamp'].dt.tz_convert(IST)
+            df['Timestamp'] = df['Timestamp'].dt.tz_localize('UTC').dt.tz_convert(indian_st)
+        else:  # If already timezone-aware, convert to indian_st
+            df['Timestamp'] = df['Timestamp'].dt.tz_convert(indian_st)
     
     if 'Date' in df.columns:
         df['Date'] = pd.to_datetime(df['Date'])
         if df['Date'].dt.tz is None:  # Check if timezone-naive
-            df['Date'] = df['Date'].dt.tz_localize(IST)
-        else:  # If already timezone-aware, convert to IST
-            df['Date'] = df['Date'].dt.tz_convert(IST)
+            df['Date'] = df['Date'].dt.tz_localize(indian_st)
+        else:  # If already timezone-aware, convert to indian_st
+            df['Date'] = df['Date'].dt.tz_convert(indian_st)
     
     return df
 
@@ -163,7 +163,7 @@ def create_dashboard(time_filter):
     # Apply time filter
     if time_filter != "All time":
         days = int(time_filter.split()[1])
-        cutoff_date = datetime.now(IST) - timedelta(days=days)
+        cutoff_date = datetime.now(indian_st) - timedelta(days=days)
         df = df[df['Timestamp'] >= cutoff_date]
     
     # Calculate KPIs
@@ -268,7 +268,7 @@ def create_schedule_section():
     schedule_df = load_data("Schedule")
     
     # Filter today's schedule
-    today = datetime.now(IST).date()
+    today = datetime.now(indian_st).date()
     today_schedule = schedule_df[pd.to_datetime(schedule_df['Date']).dt.date == today]
     
     # Format the 'Date' column to display only the date (without time)
@@ -320,23 +320,23 @@ def create_plan_vs_actual_analysis(time_filter):
     # Convert 'Date' column to datetime in both DataFrames
     schedule_df['Date'] = pd.to_datetime(schedule_df['Date'])
     if schedule_df['Date'].dt.tz is None:
-        schedule_df['Date'] = schedule_df['Date'].dt.tz_localize(IST)
+        schedule_df['Date'] = schedule_df['Date'].dt.tz_localize(indian_st)
     else:
-        schedule_df['Date'] = schedule_df['Date'].dt.tz_convert(IST)
+        schedule_df['Date'] = schedule_df['Date'].dt.tz_convert(indian_st)
     
     # Convert 'Timestamp' column to datetime and handle timezone
     logged_df['Timestamp'] = pd.to_datetime(logged_df['Timestamp'])
     if logged_df['Timestamp'].dt.tz is None:
-        logged_df['Timestamp'] = logged_df['Timestamp'].dt.tz_localize(IST)
+        logged_df['Timestamp'] = logged_df['Timestamp'].dt.tz_localize(indian_st)
     else:
-        logged_df['Timestamp'] = logged_df['Timestamp'].dt.tz_convert(IST)
+        logged_df['Timestamp'] = logged_df['Timestamp'].dt.tz_convert(indian_st)
     
     logged_df['Date'] = logged_df['Timestamp'].dt.date
     
     # Apply time filter
     if time_filter != "All time":
         days = int(time_filter.split()[1])
-        cutoff_date = (datetime.now(IST) - timedelta(days=days)).date()  # Convert to date
+        cutoff_date = (datetime.now(indian_st) - timedelta(days=days)).date()  # Convert to date
         logged_df = logged_df[logged_df['Date'] >= cutoff_date]
         schedule_df = schedule_df[schedule_df['Date'].dt.date >= cutoff_date]
     
@@ -347,7 +347,7 @@ def create_plan_vs_actual_analysis(time_filter):
     actual_hours = logged_df.groupby(['Date', 'Priority'])['Duration'].sum().reset_index()
     
     # Ensure 'Date' column in actual_hours is datetime and timezone-aware
-    actual_hours['Date'] = pd.to_datetime(actual_hours['Date']).dt.tz_localize(IST)
+    actual_hours['Date'] = pd.to_datetime(actual_hours['Date']).dt.tz_localize(indian_st)
     
     # Rename 'Duration' column to 'Duration_actual' in actual_hours
     actual_hours = actual_hours.rename(columns={'Duration': 'Duration_actual'})
@@ -451,8 +451,8 @@ def main():
                 client = gspread.authorize(creds)
                 sheet = client.open("Priorities_Tracker_Database_Spreadsheet").sheet1
                 
-                # Convert to IST timezone
-                now = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
+                # Convert to indian_st timezone
+                now = datetime.now(indian_st).strftime("%Y-%m-%d %H:%M:%S")
                 final_duration = elapsed_hours if elapsed_hours > 0 else duration
                 sheet.append_row([now, priority, activity, final_duration, remarks])
                 
