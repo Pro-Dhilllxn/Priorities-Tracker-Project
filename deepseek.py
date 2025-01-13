@@ -322,8 +322,14 @@ def create_plan_vs_actual_analysis():
     # Aggregate actual hours by date and priority
     actual_hours = logged_df.groupby(['Date', 'Priority'])['Duration'].sum().reset_index()
     
+    # Rename 'Duration' column to 'Duration_actual' in actual_hours
+    actual_hours = actual_hours.rename(columns={'Duration': 'Duration_actual'})
+    
     # Debug: Print actual_hours DataFrame
     st.write("Actual Hours DataFrame:", actual_hours)
+    
+    # Debug: Print planned_hours DataFrame
+    st.write("Planned Hours DataFrame:", planned_hours)
     
     # Merge planned and actual hours
     comparison_df = pd.merge(
@@ -331,18 +337,16 @@ def create_plan_vs_actual_analysis():
         actual_hours,
         on=['Date', 'Priority'],
         how='left',  # Keep all planned hours even if no actual hours are logged
-        suffixes=('_planned', '_actual')
     )
     
     # Debug: Print comparison_df DataFrame
     st.write("Comparison DataFrame:", comparison_df)
     
     # Fill NaN values in 'Duration_actual' with 0 (for days with no logged activities)
-    if 'Duration_actual' in comparison_df.columns:
-        comparison_df['Duration_actual'] = comparison_df['Duration_actual'].fillna(0)
-    else:
-        st.error("The 'Duration_actual' column is missing after merging. Please check the data.")
-        return
+    comparison_df['Duration_actual'] = comparison_df['Duration_actual'].fillna(0)
+    
+    # Calculate the difference between planned and actual hours
+    comparison_df['Difference'] = comparison_df['Duration_actual'] - comparison_df['Planned_Duration']
     
     # Display comparison table
     st.subheader("Planned vs Actual Hours")
@@ -350,28 +354,13 @@ def create_plan_vs_actual_analysis():
     
     # Visualize planned vs actual hours
     st.subheader("Planned vs Actual Hours Over Time")
-    fig = go.Figure()
-    
-    for priority in comparison_df['Priority'].unique():
-        priority_df = comparison_df[comparison_df['Priority'] == priority]
-        fig.add_trace(go.Scatter(
-            x=priority_df['Date'],
-            y=priority_df['Planned_Duration'],
-            mode='lines+markers',
-            name=f'{priority} (Planned)'
-        ))
-        fig.add_trace(go.Scatter(
-            x=priority_df['Date'],
-            y=priority_df['Duration_actual'],
-            mode='lines+markers',
-            name=f'{priority} (Actual)'
-        ))
-    
-    fig.update_layout(
-        title="Planned vs Actual Hours by Priority",
-        xaxis_title="Date",
-        yaxis_title="Hours",
-        hovermode='x'
+    fig = px.bar(
+        comparison_df,
+        x='Date',
+        y=['Planned_Duration', 'Duration_actual'],
+        barmode='group',
+        labels={'value': 'Hours', 'variable': 'Type'},
+        title="Planned vs Actual Hours by Date"
     )
     st.plotly_chart(fig)
 
