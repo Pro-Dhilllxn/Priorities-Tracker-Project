@@ -266,6 +266,9 @@ def create_schedule_section():
     today = datetime.now().date()
     today_schedule = schedule_df[pd.to_datetime(schedule_df['Date']).dt.date == today]
     
+    # Format the 'Date' column to display only the date (without time)
+    today_schedule['Date'] = today_schedule['Date'].dt.date
+    
     # Display today's schedule
     st.subheader("Today's Schedule")
     st.dataframe(today_schedule, hide_index=True)
@@ -291,6 +294,7 @@ def create_schedule_section():
                 st.rerun()
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
+
 
 def create_plan_vs_actual_analysis():
     """Create visualizations for planned vs actual hours"""
@@ -327,11 +331,12 @@ def create_plan_vs_actual_analysis():
         planned_hours,
         actual_hours,
         on=['Date', 'Priority'],
-        how='left',  # Keep all planned hours even if no actual hours are logged
+        how='outer',  # Include all dates and priorities from both DataFrames
     )
     
-    # Fill NaN values in 'Duration_actual' with 0 (for days with no logged activities)
+    # Fill NaN values in 'Duration_actual' and 'Planned_Duration' with 0
     comparison_df['Duration_actual'] = comparison_df['Duration_actual'].fillna(0)
+    comparison_df['Planned_Duration'] = comparison_df['Planned_Duration'].fillna(0)
     
     # Calculate the difference between planned and actual hours
     comparison_df['Difference'] = comparison_df['Duration_actual'] - comparison_df['Planned_Duration']
