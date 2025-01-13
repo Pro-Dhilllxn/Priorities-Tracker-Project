@@ -141,19 +141,12 @@ def create_timer_section():
     
     return st.session_state.elapsed_time / 3600
 
-def create_dashboard():
+def create_dashboard(time_filter):  # Accept time_filter parameter
     """Create the analysis dashboard"""
     st.title("Activity Analysis Dashboard")
     
     # Load data
     df = load_data("Sheet1")
-    
-    # Time period filter
-    st.sidebar.header("Filters")
-    time_filter = st.sidebar.selectbox(
-        "Time Period",
-        ["Last 7 days", "Last 30 days", "Last 90 days", "All time"]
-    )
     
     # Apply time filter
     if time_filter != "All time":
@@ -453,13 +446,13 @@ def main():
                 st.error(f"An error occurred: {str(e)}")
     
     with tab2:
-        create_dashboard()
+        create_dashboard(time_filter)
     
     with tab3:
         create_schedule_section()
     
     with tab4:
-        create_plan_vs_actual_analysis(time_filter)  # Pass the time_filter value
+        create_plan_vs_actual_analysis(time_filter)  
 
 if __name__ == "__main__":
     main()
