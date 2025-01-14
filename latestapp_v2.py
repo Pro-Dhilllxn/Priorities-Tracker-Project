@@ -47,7 +47,7 @@ def load_data(sheet_name):
     if 'Timestamp' in df.columns:
         df['Timestamp'] = pd.to_datetime(df['Timestamp'])
         if df['Timestamp'].dt.tz is None:  # Check if timezone-naive
-            df['Timestamp'] = df['Timestamp'].dt.tz_localize('UTC').dt.tz_convert(IST)
+            df['Timestamp'] = df['Timestamp'].dt.tz_localize(IST)  # Localize to IST
         else:  # If already timezone-aware, convert to IST
             df['Timestamp'] = df['Timestamp'].dt.tz_convert(IST)
     
@@ -455,7 +455,7 @@ def main():
                 client = gspread.authorize(creds)
                 sheet = client.open("Priorities_Tracker_Database_Spreadsheet").sheet1
                 
-                # Convert to IST timezone
+                # Capture the current time in IST
                 now = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
                 final_duration = elapsed_hours if elapsed_hours > 0 else duration
                 sheet.append_row([now, priority, activity, final_duration, remarks])
