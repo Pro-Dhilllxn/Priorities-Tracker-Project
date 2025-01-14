@@ -10,13 +10,6 @@ secrets.toml
 priorities-tracker-fa4bd7c6f7f4.json
 .gitignore
 
-# Other files to ignore:
-deepseek.py
-final_app.py
-final_appwdb_feat.py
-final_appwdb.py
-more_featgpt.py
-morefeat.py
 
 
 # Ignore temporary files and OS-specific files
