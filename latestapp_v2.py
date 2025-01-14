@@ -255,6 +255,10 @@ def create_dashboard(time_filter):
     # Recent Activities
     st.subheader("Recent Activities")
     recent_activities = df.sort_values('Timestamp', ascending=False).head(5)
+    
+    # Format the Timestamp column to display in a human-readable format
+    recent_activities['Timestamp'] = recent_activities['Timestamp'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    
     st.dataframe(
         recent_activities[['Timestamp', 'Priority', 'Activity_Description', 'Duration', 'Remarks']],
         hide_index=True
