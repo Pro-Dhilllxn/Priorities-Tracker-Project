@@ -281,7 +281,7 @@ def create_schedule_section():
     # Add new schedule
     st.subheader("Add New Schedule")
     with st.form("schedule_form"):
-        date = st.date_input("Date")
+        date = st.date_input("Date", value=datetime.now(IST).date())  # Set default date to today in IST
         priority = st.selectbox("Priority", ["Career", "Music", "Fitness", "Relationship", "Philosophy", "Finance"])
         planned_activity = st.text_input("Planned Activity")
         planned_duration = st.number_input("Planned Duration (in hours)", min_value=0.0, step=0.25)
